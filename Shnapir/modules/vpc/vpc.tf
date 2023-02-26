@@ -51,6 +51,53 @@ resource "aws_nat_gateway" "shnapir_nat_gateway" {
   }
 }
 
+# Define a public route table
+resource "aws_route_table" "shnapir_public_rt" {
+  vpc_id = aws_vpc.shnapir_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.shnapir_igw.id
+  }
+
+  tags = {
+    Name = "Shnapir-Public-RT"
+  }
+}
+
+# Define a private route table
+resource "aws_route_table" "shnapir_private_rt" {
+  vpc_id = aws_vpc.shnapir_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.shnapir_nat_gateway.id
+  }
+
+  tags = {
+    Name = "Shnapir-Private-RT"
+  }
+}
+
+# Associate the public subnet with the public route table
+resource "aws_route_table_association" "shnapir_public_rta" {
+  subnet_id      = aws_subnet.shnapir_public_subnet.id
+  route_table_id = aws_route_table.shnapir_public_rt.id
+}
+
+# Associate the private subnet with the private route table
+resource "aws_route_table_association" "shnapir_private_rta" {
+  subnet_id      = aws_subnet.shnapir_private_subnet.id
+  route_table_id = aws_route_table.shnapir_private_rt.id
+}
+
+# Create a route to the Internet Gateway in the private route table via the NAT Gateway
+resource "aws_route" "shnapir_nat_gateway_route" {
+  route_table_id            = aws_route_table.shnapir_private_route_table.id
+  destination_cidr_block    = "0.0.0.0/0"
+  nat_gateway_id            = aws_nat_gateway.shnapir_nat_gateway.id
+}
+
 # Allocate an Elastic IP for the NAT Gateway
 resource "aws_eip" "shnapir_eip" {
   vpc = true
@@ -83,4 +130,13 @@ output "aws_nat_gateway_shnapir_nat_gateway_id" {
 # Output the Internet Gateway ID
 output "aws_internet_gateway_shnapir_igw_id" {
   value = aws_internet_gateway.shnapir_igw.id
+}
+
+resource "aws_route_table" "shnapir_private_route_table" {
+  vpc_id = aws_vpc.shnapir_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_nat_gateway.shnapir_nat_gateway.id
+  }
 }
