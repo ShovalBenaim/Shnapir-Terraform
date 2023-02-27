@@ -91,13 +91,6 @@ resource "aws_route_table_association" "shnapir_private_rta" {
   route_table_id = aws_route_table.shnapir_private_rt.id
 }
 
-# Create a route to the Internet Gateway in the private route table via the NAT Gateway
-resource "aws_route" "shnapir_nat_gateway_route" {
-  route_table_id            = aws_route_table.shnapir_private_route_table.id
-  destination_cidr_block    = "0.0.0.0/0"
-  nat_gateway_id            = aws_nat_gateway.shnapir_nat_gateway.id
-}
-
 # Allocate an Elastic IP for the NAT Gateway
 resource "aws_eip" "shnapir_eip" {
   vpc = true
