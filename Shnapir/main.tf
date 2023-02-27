@@ -8,6 +8,12 @@ module "vpc" {
   source = "./modules/vpc"
 }
 
+# Use the sg module
+module "sg" {
+  source = "./modules/sg"
+  vpc_id = module.vpc.aws_vpc_shnapir_vpc_id
+}
+
 # Output the VPC ID
 output "vpc_id" {
   value = module.vpc.aws_vpc_shnapir_vpc_id
