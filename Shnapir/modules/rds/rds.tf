@@ -7,6 +7,12 @@ variable "public_subnet_id" { }
 variable "private_subnet_id" { }
 variable "sg_id" { }
 
+resource "random_password" "password" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+}
+
 resource "aws_db_subnet_group" "postgres_subnet" {
   name = "postgres-subnet-group"
   subnet_ids = [var.public_subnet_id, var.private_subnet_id]
@@ -22,8 +28,8 @@ resource "aws_db_instance" "postgres_instance" {
   engine_version            =  "14"
   multi_az                  = false
   identifier                = "postgres-instance"
-  username                  = var.postgres_username
-  password                  = var.postgres_password
+  username                  = "ubuntu"
+  password                  = random_password.password.result
   instance_class            = "db.t3.micro"
   allocated_storage         = 20
   db_subnet_group_name      = aws_db_subnet_group.postgres_subnet.name
