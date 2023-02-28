@@ -58,3 +58,7 @@ resource "aws_security_group" "shnapir_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
+output "sg_shnapir_sg_id" {
+  value = aws_security_group.shnapir_sg.id
+}
