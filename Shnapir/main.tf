@@ -3,6 +3,9 @@ provider "aws" {
   region = "us-east-1"
 }
 
+variable "postgres_username" { }
+variable "postgres_password" { }
+
 # Use the VPC module
 module "vpc" {
   source = "./modules/vpc"
@@ -22,6 +25,14 @@ module "auto_scaling" {
   sg_id        = module.sg.security_group_id
 }
 
+module "rds" {
+  source = "./modules/rds"
+  postgres_username = var.postgres_username
+  postgres_password = var.postgres_password
+  private_subnet_id = module.vpc.aws_subnet_shnapir_private_subnet_id
+  public_subnet_id = module.vpc.aws_subnet_shnapir_public_subnet_id
+  sg_id = module.sg.sg_shnapir_sg_id
+}
 
 # Output the VPC ID
 output "vpc_id" {
