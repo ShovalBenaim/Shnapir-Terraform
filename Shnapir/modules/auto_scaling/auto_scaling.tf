@@ -5,9 +5,9 @@ variable "sg_id" {}
 
 resource "aws_launch_template" "shnapir_launch_template" {
   name_prefix   = "Shnapir-Launch-Template"
-  image_id      = "ami-09cd747c78a9add63" # replace with our working app AMI ID
+  image_id      = "ami-09cd747c78a9add63" # Ubuntu 20.04 ami
   instance_type = "t2.micro"
-
+  key_name      = "Shnapir"
   user_data = base64encode("echo 'Hello, World!' > /tmp/hello.txt")
 
   network_interfaces {
@@ -74,3 +74,56 @@ resource "aws_lb_target_group" "shnapir_lb_target_group" {
   }
 }
 
+# ECR
+resource "aws_ecr_repository" "shnapir_ecr" {
+  name                 = "shnapir-ecr"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+}
+
+# ECS
+resource "aws_ecs_cluster" "shnapir_ecs" {
+  name = "shnapir_ecs"
+}
+
+# ecs service creation
+resource "aws_ecs_service" "shnapir_ecs_service" {
+  name            = "shnapir-ecs-service"
+  cluster         = aws_ecs_cluster.shnapir_ecs.id
+  task_definition = aws_ecs_task_definition.shnapir_task.arn
+  desired_count   = 1
+  launch_type     = "EC2"
+  load_balancer {
+    target_group_arn = aws_lb_target_group.shnapir_lb_target_group.arn
+    container_name   = "shnapir_container"
+    container_port   = 8000
+  }
+}
+
+
+resource "aws_ecs_task_definition" "shnapir_task" {
+  family         = "shnapir_task"
+  container_definitions = jsonencode(
+    [
+      {
+        name      = "shnapir_container",
+        cpu       = 1,
+        memory    = 512,
+        essential = true,
+        image     = "334604350470.dkr.ecr.us-east-1.amazonaws.com/shnapir-ecr",
+        # "environment": [],
+        portMappings = [
+          {
+            containerPort = 8000,
+            hostPort = 8000,
+            protocol = "tcp"
+          }
+        ]
+          
+      }
+    ]
+  )
+}
