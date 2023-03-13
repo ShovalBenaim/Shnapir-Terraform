@@ -1,5 +1,5 @@
 provider "aws" {
-  
+  region = "us-east-1"
 }
 variable "postgres_username" { }
 variable "postgres_password" { }
@@ -22,7 +22,7 @@ resource "aws_db_subnet_group" "postgres_subnet" {
     Name = "postgres-subnet-group"
   }
 }
-  
+
 resource "aws_db_instance" "postgres_instance" {
   engine                    = "postgres"
   engine_version            =  "14"

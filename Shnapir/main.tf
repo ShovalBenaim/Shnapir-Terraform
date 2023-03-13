@@ -21,7 +21,8 @@ module "sg" {
 module "auto_scaling" {
   source       = "./modules/auto_scaling"
   vpc_id       = module.vpc.aws_vpc_shnapir_vpc_id
-  vpc_subnet_id = module.vpc.aws_subnet_shnapir_private_subnet_id
+  vpc_prv_subnet_id = module.vpc.aws_subnet_shnapir_private_subnet_id
+  vpc_pub_subnet_id = module.vpc.aws_subnet_shnapir_public_subnet_id
   sg_id        = module.sg.security_group_id
 }
 
@@ -59,6 +60,7 @@ output "internet_gateway_id" {
   value = module.vpc.aws_internet_gateway_shnapir_igw_id
 }
 
+# Output the Security Group ID
 output "security_group_id" {
   value = module.sg.security_group_id
 }
