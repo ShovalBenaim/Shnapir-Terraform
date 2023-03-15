@@ -5,29 +5,30 @@ variable "sg_id" {}
 
 resource "aws_launch_template" "shnapir_launch_template" {
   name_prefix   = "Shnapir-Launch-Template"
-  image_id      = "ami-09cd747c78a9add63" # Ubuntu 20.04 ami
+  image_id      = "ami-05e7fa5a3b6085a75" # ECS
   instance_type = "t2.micro"
   key_name      = "Shnapir"
-  user_data = base64encode("echo 'Hello, World!' > /tmp/hello.txt")
-
-  network_interfaces {
-    device_index               = 0
-    associate_public_ip_address = true
-    security_groups             = [var.sg_id]
-    subnet_id                   = var.vpc_prv_subnet_id
-  }
+  user_data = base64encode("echo 'ECS_CLUSTER=${aws_ecs_cluster.shnapir_ecs.name}' >> /etc/ecs/ecs.config") 
 }
+
 
 resource "aws_autoscaling_group" "shnapir_asg" {
   name = "Shnapir-ASG"
   launch_template {
     id      = aws_launch_template.shnapir_launch_template.id
-    version = "$Latest"
+    version = aws_launch_template.shnapir_launch_template.latest_version
   }
 vpc_zone_identifier = [var.vpc_prv_subnet_id]
 
   min_size = 2
   max_size = 4
+
+  instance_refresh {
+    strategy = "Rolling"
+    preferences {
+      min_healthy_percentage = 50
+    }
+  }
 }
 
 output "asg_id" {
@@ -59,11 +60,10 @@ resource "aws_lb_listener" "shnapir_lb_listener" {
 
 resource "aws_lb_target_group" "shnapir_lb_target_group" {
   name        = "shnapir-target-group"
-  port     = "8000"
   protocol = "HTTP"
   vpc_id      = var.vpc_id
   deregistration_delay = 30
-  
+  port = "8000"
   health_check {
     healthy_threshold   = 2
     unhealthy_threshold = 2
@@ -118,7 +118,6 @@ resource "aws_ecs_task_definition" "shnapir_task" {
         portMappings = [
           {
             containerPort = 8000,
-            hostPort = 8000,
             protocol = "tcp"
           }
         ]
